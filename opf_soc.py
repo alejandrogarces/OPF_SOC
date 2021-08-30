@@ -73,22 +73,25 @@ print(OPFSOC.status,obj.value)
 v = np.sqrt(u.value)
 a = np.zeros(num_nodes)
 s = np.zeros(num_nodes)*0j
+plim = np.zeros(num_nodes)
 for (k,m) in line:
     pos,ykm,smax = line[(k,m)]    
     a[m] = a[k]-np.angle(w.value[pos])
 for m in source:
     pos,pmax,smax = source[m]
     s[m] = s_gen[pos].value
+    plim[m] = pmax
 results = pd.DataFrame()
 results['v(pu)'] = v
 results['Ang(deg)'] = a*180/np.pi
 results['Pgen'] = s.real
+results['Pmax'] = plim
 results['Qgen'] = s.imag
 print(results.head(num_nodes))
 Vn = v*np.exp(1j*a)
 
 
-"----- Calculate the Ybus -----"
+"----- Evaluate power loss -----"
 Ybus = np.zeros((num_nodes,num_nodes))*1j
 for b in line:
     k,m = b
@@ -97,9 +100,11 @@ for b in line:
     Ybus[k,m] = Ybus[k,m] - ykm
     Ybus[m,k] = Ybus[m,k] - ykm
     Ybus[m,m] = Ybus[m,m] + ykm
-    
-"----- Evaluate power loss -----"
 In = Ybus@Vn
 Sloss = Vn.T@In.conjugate()
-
 print(Sloss)
+plt.plot(v)
+plt.grid()
+plt.xlabel('Nodes')
+plt.ylabel('Voltages')
+plt.show()
